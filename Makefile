@@ -11,8 +11,8 @@ INSTALL_DIR    := /Applications
 
 SOURCES        := $(wildcard Sources/*/*.swift)
 DEPLOY_TARGET  := 14.0
+HOST_ARCH      := $(shell uname -m)
 SWIFTFLAGS     := -O -swift-version 6 -parse-as-library \
-                  -target $(shell uname -m)-apple-macos$(DEPLOY_TARGET) \
                   -framework Cocoa -framework ServiceManagement
 
 VERSION        := $(shell /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null)
@@ -34,14 +34,25 @@ DEVID_IDENTITY ?= Developer ID Application
 NOTARY_PROFILE ?= CommandInputNotary
 DIST_ZIP       := $(DIST_DIR)/$(EXEC_NAME)-$(VERSION).zip
 
-.PHONY: all compile build release notarize dist run install uninstall clean test
+.PHONY: all compile compile-universal build release notarize dist run install uninstall clean test
 
 all: build
 
 compile:
 	@mkdir -p "$(MACOS_DIR)"
 	@cp Info.plist "$(CONTENTS_DIR)/Info.plist"
-	swiftc $(SWIFTFLAGS) -o "$(EXEC)" $(SOURCES)
+	swiftc $(SWIFTFLAGS) -target $(HOST_ARCH)-apple-macos$(DEPLOY_TARGET) \
+	  -o "$(EXEC)" $(SOURCES)
+
+compile-universal:
+	@mkdir -p "$(MACOS_DIR)"
+	@cp Info.plist "$(CONTENTS_DIR)/Info.plist"
+	swiftc $(SWIFTFLAGS) -target arm64-apple-macos$(DEPLOY_TARGET) \
+	  -o "$(EXEC)-arm64" $(SOURCES)
+	swiftc $(SWIFTFLAGS) -target x86_64-apple-macos$(DEPLOY_TARGET) \
+	  -o "$(EXEC)-x86_64" $(SOURCES)
+	lipo -create -output "$(EXEC)" "$(EXEC)-arm64" "$(EXEC)-x86_64"
+	@rm -f "$(EXEC)-arm64" "$(EXEC)-x86_64"
 
 # Default development build
 build: compile
@@ -49,7 +60,7 @@ build: compile
 	@echo "Built \"$(APP_DIR)\" (signed: $(SIGN_IDENTITY))"
 
 # Release build: Developer ID, Hardened Runtime, and secure timestamp
-release: compile
+release: compile-universal
 	@codesign --force --options runtime --timestamp \
 	  --sign "$(DEVID_IDENTITY)" "$(APP_DIR)"
 	@echo "Release-signed \"$(APP_DIR)\" (identity: $(DEVID_IDENTITY))"

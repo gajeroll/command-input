@@ -33,3 +33,8 @@ jobs:
         run: make test
       - name: Compile
         run: make compile SIGN_IDENTITY=-
+      - name: Universal compile
+        run: |
+          make compile-universal
+          lipo -archs "build/Command Input.app/Contents/MacOS/CommandInput" | grep -q arm64
+          lipo -archs "build/Command Input.app/Contents/MacOS/CommandInput" | grep -q x86_64
