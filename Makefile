@@ -15,7 +15,7 @@ HOST_ARCH      := $(shell uname -m)
 SWIFTFLAGS     := -O -swift-version 6 -parse-as-library \
                   -framework Cocoa -framework ServiceManagement
 
-VERSION        := $(shell /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null)
+VERSION        ?= $(shell /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null)
 
 # --- Development signing ---------------------------------------------------
 # Prefer an Apple Development identity so TCC and ServiceManagement see a stable
@@ -34,7 +34,9 @@ DEVID_IDENTITY ?= Developer ID Application
 NOTARY_PROFILE ?= CommandInputNotary
 DIST_ZIP       := $(DIST_DIR)/$(EXEC_NAME)-$(VERSION).zip
 
-.PHONY: all compile compile-universal build release notarize dist run install uninstall clean test
+BUNDLE_VERSION ?= $(shell /usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist 2>/dev/null)
+
+.PHONY: all compile compile-universal build release notarize dist run install uninstall clean test verify-release
 
 all: build
 
@@ -63,8 +65,14 @@ build: compile
 	@codesign --force --sign "$(SIGN_IDENTITY)" "$(APP_DIR)"
 	@echo "Built \"$(APP_DIR)\" (signed: $(SIGN_IDENTITY))"
 
+verify-release:
+	@test -n "$(VERSION)" || { echo "CFBundleShortVersionString is missing"; exit 1; }
+	@echo "$(BUNDLE_VERSION)" | grep -Eq '^[0-9]+$$' || { echo "CFBundleVersion must be an integer"; exit 1; }
+	@grep -q "## \[$(VERSION)\]" CHANGELOG.md || { echo "CHANGELOG.md has no ## [$(VERSION)] heading"; exit 1; }
+	@echo "Release $(VERSION) (build $(BUNDLE_VERSION)) looks ready."
+
 # Release build: Developer ID, Hardened Runtime, and secure timestamp
-release: compile-universal
+release: verify-release compile-universal
 	@codesign --force --options runtime --timestamp \
 	  --sign "$(DEVID_IDENTITY)" "$(APP_DIR)"
 	@echo "Release-signed \"$(APP_DIR)\" (identity: $(DEVID_IDENTITY))"
