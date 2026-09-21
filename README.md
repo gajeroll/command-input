@@ -1,5 +1,7 @@
 # Command Input
 
+[日本語](README.ja.md)
+
 Command Input is a lightweight macOS menu bar app that switches Japanese input
 modes with single taps of the Command keys:
 
