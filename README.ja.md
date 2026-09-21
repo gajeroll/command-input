@@ -19,6 +19,19 @@ macOS メニューバーアプリです。
 
 ## インストール
 
+### Homebrew（推奨）
+
+Command Input は Homebrew tap で配布されています。Homebrew 7 ではインストール前に Cask の信頼（trust）が必要です。
+
+```sh
+brew trust --cask gajeroll/tap/command-input
+brew install --cask gajeroll/tap/command-input
+```
+
+手動でインストールしたアプリが `/Applications` に存在する場合は、Cask のインストール前に削除してください。Homebrew は既存アプリの上書きを拒否します。
+
+`/Applications` に配置されたアプリは、初回起動時にログイン項目の自動登録（ログイン時の自動起動）を有効にします。
+
 ### ビルド済みバイナリ
 
 [Releases](https://github.com/gajeroll/command-input/releases) から最新の
@@ -37,13 +50,30 @@ make install    # /Applications にインストール
 
 Command Input はメニューバー常駐アプリとして動作し、Dock には表示されません。
 
-### アンインストール
+### アップデート
+
+アプリ内アップデート機能はありません。Homebrew でインストールした場合は以下を実行してください。
 
 ```sh
-make uninstall  # /Applications/Command Input.app を削除
+brew upgrade --cask
 ```
 
-アプリを終了してゴミ箱へ移動することでもアンインストールできます。
+手動でインストールした場合は、新しいバージョンの `Command Input.app` で `/Applications` の既存アプリを置き換えてください。
+
+### アンインストール
+
+ログイン項目に古い登録レコードが残らないよう、アンインストール前にアプリ内メニューの「Launch at Login」トグルをオフにしてください。
+
+- **Homebrew:**
+  ```sh
+  brew uninstall --cask --zap command-input
+  ```
+  `--zap` はアプリ本体と設定 plist を削除します。macOS のログイン項目（BTM）の登録およびアクセシビリティ（TCC）権限の付与状態は削除されません。
+- **ソースビルド / 手動:**
+  ```sh
+  make uninstall  # /Applications/Command Input.app を削除
+  ```
+  アプリを終了してゴミ箱へ移動することでもアンインストールできます。
 
 ## 権限とプライバシー
 
@@ -114,7 +144,6 @@ make clean      # ビルド成果物の削除
 
 ## ロードマップ
 
-- Homebrew Cask による配布
 - DMG パッケージング
 - 自動アップデート
 

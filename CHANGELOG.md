@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Homebrew tap distribution via `gajeroll/tap/command-input`.
+- Notarized Universal Binary distribution (`arm64` and `x86_64`) via `make notarize`.
 - `KeyRemapEngine` pure state machine extracted into `CommandInputCore`.
 - Unit test suite using Swift Testing and `Package.swift`, runnable via `make test`.
 - `LaunchAtLoginManager` and `LoginItemService` protocol abstractions extracted
   into `CommandInputCore`.
 - Automatic recreation of dead event taps when re-enabling fails.
-- Universal Binary compilation (`arm64` and `x86_64`) via
-  `make compile-universal` and `make release`.
 - `PrivacyInfo.xcprivacy` privacy manifest declaring UserDefaults usage (CA92.1)
   and zero data collection or tracking.
 - `make verify-release` target to check version format in `Info.plist` and

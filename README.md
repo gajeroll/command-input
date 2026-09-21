@@ -19,6 +19,19 @@ unchanged.
 
 ## Installation
 
+### Homebrew (recommended)
+
+Command Input is available via a Homebrew tap. Homebrew 7 requires trusting the cask before installation:
+
+```sh
+brew trust --cask gajeroll/tap/command-input
+brew install --cask gajeroll/tap/command-input
+```
+
+If you previously installed Command Input manually, delete `/Applications/Command Input.app` before running the cask install. Homebrew will refuse to overwrite an existing application.
+
+On first launch from `/Applications`, the app enables Launch at Login automatically.
+
 ### Prebuilt binary
 
 Download the latest `CommandInput-<version>.zip` from
@@ -37,13 +50,30 @@ make install    # Copy to /Applications
 
 Command Input runs as a menu bar accessory and does not appear in the Dock.
 
-### Uninstallation
+### Upgrades
+
+There is no in-app updater. If installed via Homebrew:
 
 ```sh
-make uninstall  # Remove /Applications/Command Input.app
+brew upgrade --cask
 ```
 
-You can also quit the app and move it to the Trash.
+If installed manually, replace `/Applications/Command Input.app` with the newer release.
+
+### Uninstallation
+
+Turn the in-app **Launch at Login** toggle off before uninstalling if you do not want a leftover Login Items record.
+
+- **Homebrew:**
+  ```sh
+  brew uninstall --cask --zap command-input
+  ```
+  `--zap` removes the application and its preferences plist. macOS Login Items (BTM) registrations and Accessibility (TCC) grants are not cleared by Homebrew.
+- **Source / manual:**
+  ```sh
+  make uninstall  # Remove /Applications/Command Input.app
+  ```
+  You can also quit the app and move `/Applications/Command Input.app` to the Trash.
 
 ## Permissions and Privacy
 
@@ -115,7 +145,6 @@ For event-tap guarantees and vulnerability reporting, see
 
 ## Roadmap
 
-- Homebrew Cask distribution
 - DMG packaging
 - Automatic updates
 
