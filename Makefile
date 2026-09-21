@@ -38,15 +38,19 @@ DIST_ZIP       := $(DIST_DIR)/$(EXEC_NAME)-$(VERSION).zip
 
 all: build
 
+RESOURCES_DIR  := $(CONTENTS_DIR)/Resources
+
 compile:
-	@mkdir -p "$(MACOS_DIR)"
+	@mkdir -p "$(MACOS_DIR)" "$(RESOURCES_DIR)"
 	@cp Info.plist "$(CONTENTS_DIR)/Info.plist"
+	@cp PrivacyInfo.xcprivacy "$(RESOURCES_DIR)/PrivacyInfo.xcprivacy"
 	swiftc $(SWIFTFLAGS) -target $(HOST_ARCH)-apple-macos$(DEPLOY_TARGET) \
 	  -o "$(EXEC)" $(SOURCES)
 
 compile-universal:
-	@mkdir -p "$(MACOS_DIR)"
+	@mkdir -p "$(MACOS_DIR)" "$(RESOURCES_DIR)"
 	@cp Info.plist "$(CONTENTS_DIR)/Info.plist"
+	@cp PrivacyInfo.xcprivacy "$(RESOURCES_DIR)/PrivacyInfo.xcprivacy"
 	swiftc $(SWIFTFLAGS) -target arm64-apple-macos$(DEPLOY_TARGET) \
 	  -o "$(EXEC)-arm64" $(SOURCES)
 	swiftc $(SWIFTFLAGS) -target x86_64-apple-macos$(DEPLOY_TARGET) \
