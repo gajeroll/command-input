@@ -73,10 +73,6 @@ final class AppModel {
     /// often than the permission check while still following System Settings.
     private let launchAtLoginRefreshInterval: Duration = .seconds(15)
 
-    private let launchAtLoginPreferenceKey = "launchAtLoginEnabled"
-    private let legacyDidConfigureLaunchAtLoginKey = "didConfigureLaunchAtLogin"
-    private let repairAttemptsKey = "launchAtLoginRepairAttempts"
-    private let repairBudgetKey = "launchAtLoginRepairBudget"
     private let maximumRepairAttempts = 3
 
     func start() {
@@ -165,7 +161,7 @@ final class AppModel {
     /// overriding a choice the user may have made in System Settings.
     private func migrateLegacyPreferenceIfNeeded() {
         guard storedPreference == nil,
-              defaults.object(forKey: legacyDidConfigureLaunchAtLoginKey) != nil
+              defaults.object(forKey: DefaultsKey.legacyDidConfigureLaunchAtLogin) != nil
         else {
             return
         }
@@ -276,30 +272,30 @@ final class AppModel {
     /// starts over, while an installation macOS keeps rejecting stops retrying on
     /// every launch and waits for the user to repair it from the menu.
     private func repairRegistrationWithinBudget() {
-        if defaults.string(forKey: repairBudgetKey) != installationIdentity {
-            defaults.set(installationIdentity, forKey: repairBudgetKey)
-            defaults.set(0, forKey: repairAttemptsKey)
+        if defaults.string(forKey: DefaultsKey.repairBudget) != installationIdentity {
+            defaults.set(installationIdentity, forKey: DefaultsKey.repairBudget)
+            defaults.set(0, forKey: DefaultsKey.repairAttempts)
         }
 
-        let attempts = defaults.integer(forKey: repairAttemptsKey)
+        let attempts = defaults.integer(forKey: DefaultsKey.repairAttempts)
         guard attempts < maximumRepairAttempts else { return }
-        defaults.set(attempts + 1, forKey: repairAttemptsKey)
+        defaults.set(attempts + 1, forKey: DefaultsKey.repairAttempts)
 
         register()
     }
 
     private func clearRepairBudget() {
-        defaults.removeObject(forKey: repairAttemptsKey)
-        defaults.removeObject(forKey: repairBudgetKey)
+        defaults.removeObject(forKey: DefaultsKey.repairAttempts)
+        defaults.removeObject(forKey: DefaultsKey.repairBudget)
     }
 
     private var storedPreference: Bool? {
-        defaults.object(forKey: launchAtLoginPreferenceKey) as? Bool
+        defaults.object(forKey: DefaultsKey.launchAtLoginPreference) as? Bool
     }
 
     private func storePreference(_ enabled: Bool) {
-        defaults.set(enabled, forKey: launchAtLoginPreferenceKey)
-        defaults.removeObject(forKey: legacyDidConfigureLaunchAtLoginKey)
+        defaults.set(enabled, forKey: DefaultsKey.launchAtLoginPreference)
+        defaults.removeObject(forKey: DefaultsKey.legacyDidConfigureLaunchAtLogin)
     }
 
     private func recordError(_ error: Error) {
