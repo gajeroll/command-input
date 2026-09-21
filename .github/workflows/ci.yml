@@ -12,15 +12,21 @@ permissions:
 jobs:
   build:
     name: Lint and compile
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Select Xcode
         run: |
+          ls /Applications | grep -i xcode || true
           if [ -d /Applications/Xcode_16.app ]; then
             sudo xcode-select -s /Applications/Xcode_16.app
+          elif [ -d /Applications/Xcode_16.2.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.2.app
+          elif [ -d /Applications/Xcode_16.4.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.4.app
           fi
           xcodebuild -version
+          swift --version
       - name: Lint
         run: xcrun swift-format lint --recursive Sources
       - name: Compile
