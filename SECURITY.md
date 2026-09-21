@@ -8,11 +8,12 @@ document states what that tap does and does not do.
 
 ### Keystroke handling
 
-- **All `keyDown` events are observed.** The tap must see every key-down so a
-  combination such as Command-A can cancel a pending input-mode switch. Without
-  that, releasing Command after a shortcut would be mistaken for a standalone
-  tap and would emit Eisu or Kana. The `keyDown` mask cannot be removed without
-  changing that behavior.
+- **All `keyDown` and `keyUp` events are observed.** The tap must see every
+  key-down and key-up so that pressing a combination such as Command-A or
+  releasing a non-modifier key while Command is held cancels a pending
+  input-mode switch. Without that, releasing Command after a shortcut would be
+  mistaken for a standalone tap and would emit Eisu or Kana. Neither mask can
+  be removed without changing that behavior.
 - **Keystrokes are not stored.** Modifier state lives in memory only for the
   duration of a press, then is discarded. Nothing is written to disk, logs, or
   temporary files.
@@ -28,7 +29,7 @@ observation. "Listen-only" is proof that Command Input does not rewrite or
 drop your keystrokes; it is not proof that it cannot see them.
 
 Accessibility permission is still required. A listen-only tap that watches
-`keyDown` is still a keystroke observer.
+`keyDown` and `keyUp` is still a keystroke observer.
 
 ### Local-only processing
 

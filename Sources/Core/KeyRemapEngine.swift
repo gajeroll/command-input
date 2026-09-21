@@ -81,13 +81,8 @@ public struct KeyRemapEngine {
 
     public mutating func handle(_ input: Input) -> Action {
         switch input {
-        case .keyDown:
-            // keyUp is accepted as input but ignored until the tap mask
-            // includes it, matching the current event-tap behavior.
+        case .keyDown, .keyUp:
             pendingCommandKeyCode = nil
-            return .none
-
-        case .keyUp:
             return .none
 
         case .pointerActivity:

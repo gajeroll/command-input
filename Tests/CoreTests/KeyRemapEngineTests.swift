@@ -82,19 +82,17 @@ struct KeyRemapEngineTests {
         )
     }
 
-    @Test("A down, Command tap, A up still posts — current tap mask ignores keyUp")
-    func heldLetterThenCommandStillPosts() {
+    @Test("A down, Command tap, A up does not switch")
+    func heldLetterThenCommandDoesNotPost() {
         var engine = KeyRemapEngine()
         #expect(engine.handle(.keyDown) == .none)
         _ = engine.handle(
             .flagsChanged(keyCode: KeyRemapEngine.KeyCode.leftCommand, flags: KeyRemapEngine.DeviceMask.leftCommand)
         )
-        // keyUp is not in the event-tap mask yet, so the engine ignores it.
         #expect(engine.handle(.keyUp) == .none)
-        #expect(engine.pendingCommandKeyCode == KeyRemapEngine.KeyCode.leftCommand)
+        #expect(engine.pendingCommandKeyCode == nil)
         #expect(
-            engine.handle(.flagsChanged(keyCode: KeyRemapEngine.KeyCode.leftCommand, flags: 0))
-                == .post(KeyRemapEngine.KeyCode.eisu)
+            engine.handle(.flagsChanged(keyCode: KeyRemapEngine.KeyCode.leftCommand, flags: 0)) == .none
         )
     }
 
