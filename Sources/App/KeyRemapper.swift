@@ -22,10 +22,14 @@ final class KeyRemapper {
     @discardableResult
     func start() -> Bool {
         if let eventTap {
-            if !CGEvent.tapIsEnabled(tap: eventTap) {
+            if CFMachPortIsValid(eventTap) {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
+                if CGEvent.tapIsEnabled(tap: eventTap) {
+                    return true
+                }
             }
-            return true
+            NSLog("Command Input: existing event tap could not be re-enabled; recreating.")
+            stop()
         }
 
         let mask: CGEventMask =
@@ -90,6 +94,10 @@ final class KeyRemapper {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             if let eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
+                if !CGEvent.tapIsEnabled(tap: eventTap) {
+                    NSLog("Command Input: failed to re-enable event tap; will recreate on next tick.")
+                    stop()
+                }
             }
 
         case .keyDown:
