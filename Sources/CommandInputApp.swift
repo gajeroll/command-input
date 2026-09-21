@@ -52,6 +52,30 @@ private struct MenuContent: View {
 
         Divider()
 
+        Toggle("Launch at Login", isOn: Binding(
+            get: { model.launchesAtLogin },
+            set: { model.setLaunchesAtLogin($0) }
+        ))
+
+        if let detail = model.launchAtLoginDetail {
+            Text(detail)
+        }
+        if let error = model.launchAtLoginError {
+            Text("Launch at Login Error: \(error)")
+        }
+
+        if model.requiresLaunchAtLoginApproval {
+            Button("Open Login Items Settings") {
+                model.openLoginItemsSettings()
+            }
+        } else if model.needsLaunchAtLoginRepair {
+            Button("Repair Launch at Login") {
+                model.setLaunchesAtLogin(true)
+            }
+        }
+
+        Divider()
+
         if !model.isActive {
             Button("Open Accessibility Settings") {
                 model.openAccessibilitySettings()

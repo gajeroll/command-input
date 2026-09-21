@@ -22,6 +22,23 @@ make install    # Copy to /Applications
 
 The app runs in the menu bar and does not appear in the Dock.
 
+## Launch at Login
+
+Launch at Login uses macOS `SMAppService` and stores your choice in app preferences. That stored
+choice, not the current system state, decides what the app does on launch, so a registration macOS
+silently drops is restored instead of being mistaken for an opt-out.
+
+The first run from `/Applications` or `~/Applications` turns Launch at Login on. A copy running from
+`build/` is never registered automatically, because that bundle is about to be replaced or moved.
+The menu toggle works from any location.
+
+If macOS drops the registration, the app re-registers it on the next few launches and then stops,
+leaving **Repair Launch at Login** in the menu. If macOS asks for approval instead, the menu links
+to Login Items in System Settings, where the item has to be turned on once.
+
+Use the menu toggle to opt out. Deleting the item in System Settings only clears the system record,
+so the app restores it from the stored preference.
+
 ## Permissions
 
 Command Input requires **Accessibility** permission to observe and post keyboard events. Enable it in **System Settings > Privacy & Security > Accessibility** when prompted.
@@ -38,13 +55,28 @@ The codebase is intentionally small and uses Swift 6, SwiftUI `MenuBarExtra`, an
 
 ## Development Signing
 
-`make` uses ad-hoc signing by default. For frequent local development, create a trusted self-signed code signing certificate named `Command Input Dev` so Accessibility permission can survive rebuilds.
+`make` prefers an available **Apple Development** signing identity. Accessibility permission only
+needs a signing identity that stays the same across rebuilds, but Login Items additionally needs a
+real Team ID, which ad-hoc signing cannot provide. Override the identity explicitly when more than
+one is installed:
 
-The Makefile uses that certificate automatically when available, or you can pass it explicitly:
+```sh
+make SIGN_IDENTITY="Apple Development: Your Name (TEAMID1234)"
+```
+
+Without an Apple Development identity, `make` falls back to ad-hoc signing. Ad-hoc signatures change
+on every rebuild, so Accessibility permission has to be granted again each time and Launch at Login
+cannot be registered at all. A trusted self-signed certificate is a better fallback because it at
+least keeps the identity stable:
 
 ```sh
 make SIGN_IDENTITY="Command Input Dev"
 ```
+
+Switching signing identities changes how macOS identifies the app, so Accessibility permission has
+to be granted again after the first build that changes it. An Apple Development identity and a
+Developer ID identity usually belong to different teams, so permissions and login items are not
+shared between local and release builds. Verify Launch at Login with the build you ship.
 
 ## Release Builds
 

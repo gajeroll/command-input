@@ -13,16 +13,19 @@ SOURCES        := $(wildcard Sources/*.swift)
 DEPLOY_TARGET  := 14.0
 SWIFTFLAGS     := -O -swift-version 6 -parse-as-library \
                   -target $(shell uname -m)-apple-macos$(DEPLOY_TARGET) \
-                  -framework Cocoa
+                  -framework Cocoa -framework ServiceManagement
 
 VERSION        := $(shell /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null)
 
 # --- Development signing ---------------------------------------------------
-# Use ad-hoc signing by default. If "$(DEV_CERT_NAME)" exists, use it so
-# Accessibility permission can survive local rebuilds. See README.md.
-DEV_CERT_NAME  := Command Input Dev
-SIGN_IDENTITY  ?= $(shell security find-identity -v -p codesigning 2>/dev/null \
-                    | grep -q "$(DEV_CERT_NAME)" && echo "$(DEV_CERT_NAME)" || echo "-")
+# Prefer an Apple Development identity so TCC and ServiceManagement see a stable
+# Team ID across rebuilds. Ad-hoc signing remains a local-only fallback and cannot
+# register a login item. The first match wins, so pass SIGN_IDENTITY explicitly
+# when the keychain holds identities from more than one team. "build" reports the
+# identity it used.
+DEV_SIGNING_IDENTITY := $(shell security find-identity -v -p codesigning 2>/dev/null \
+                          | /usr/bin/awk -F '"' '/Apple Development:/{print $$2; exit}')
+SIGN_IDENTITY        ?= $(if $(DEV_SIGNING_IDENTITY),$(DEV_SIGNING_IDENTITY),-)
 
 # --- Release signing and notarization --------------------------------------
 # Developer ID signing, Hardened Runtime, and notarization are required for
