@@ -6,12 +6,14 @@ Thank you for improving Command Input.
 
 Command Input is a Swift 6 app with no third-party dependencies:
 
-- `Sources/CommandInputApp.swift`: app entry point, `AppDelegate`, and the
+- `Sources/App/CommandInputApp.swift`: app entry point, `AppDelegate`, and the
   SwiftUI `MenuBarExtra` menu.
-- `Sources/AppModel.swift`: app state, Accessibility permission polling, and
+- `Sources/App/AppModel.swift`: app state, Accessibility permission polling, and
   `SMAppService` launch-at-login synchronization.
-- `Sources/KeyRemapper.swift`: session `CGEventTap` that watches Left and Right
-  Command and posts synthetic Eisu and Kana events.
+- `Sources/App/KeyRemapper.swift`: session `CGEventTap` lifecycle and synthetic
+  Eisu and Kana event posting.
+- `Sources/Core/KeyRemapEngine.swift`: pure Command-tap state machine that
+  evaluates modifier flags and key events.
 
 ## Development setup
 

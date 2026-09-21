@@ -9,7 +9,7 @@ MACOS_DIR      := $(CONTENTS_DIR)/MacOS
 EXEC           := $(MACOS_DIR)/$(EXEC_NAME)
 INSTALL_DIR    := /Applications
 
-SOURCES        := $(wildcard Sources/*.swift)
+SOURCES        := $(wildcard Sources/*/*.swift)
 DEPLOY_TARGET  := 14.0
 SWIFTFLAGS     := -O -swift-version 6 -parse-as-library \
                   -target $(shell uname -m)-apple-macos$(DEPLOY_TARGET) \

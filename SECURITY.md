@@ -32,7 +32,8 @@ Accessibility permission is still required. A listen-only tap that watches
 
 ### Local-only processing
 
-- Event handling is confined to [`Sources/KeyRemapper.swift`](Sources/KeyRemapper.swift).
+- Event handling is confined to [`Sources/App/KeyRemapper.swift`](Sources/App/KeyRemapper.swift)
+  and [`Sources/Core/KeyRemapEngine.swift`](Sources/Core/KeyRemapEngine.swift).
 - The app imports `Cocoa`, `SwiftUI`, `Observation`, and `ServiceManagement`.
   It does not import `Network`, use `URLSession`, or open sockets.
 
@@ -45,8 +46,9 @@ From a clone of this repository:
 rg 'URLSession|Network|NWConnection|socket|http://|https://' Sources/
 ```
 
-Read `Sources/KeyRemapper.swift` end to end. The file is a little over 200
-lines and contains the entire event-tap path.
+Read `Sources/App/KeyRemapper.swift` and `Sources/Core/KeyRemapEngine.swift` end
+to end. Together, the two files are roughly 250 lines and contain the entire
+event-tap and remapping path.
 
 ## Supported Versions
 

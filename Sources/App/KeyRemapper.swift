@@ -6,68 +6,7 @@ import Cocoa
 /// the main actor.
 @MainActor
 final class KeyRemapper {
-    private enum KeyCode {
-        static let rightCommand: CGKeyCode = 54
-        static let leftCommand: CGKeyCode = 55
-        static let leftShift: CGKeyCode = 56
-        static let capsLock: CGKeyCode = 57
-        static let leftOption: CGKeyCode = 58
-        static let leftControl: CGKeyCode = 59
-        static let rightShift: CGKeyCode = 60
-        static let rightOption: CGKeyCode = 61
-        static let rightControl: CGKeyCode = 62
-        static let function: CGKeyCode = 63
-        static let eisu: CGKeyCode = 102
-        static let kana: CGKeyCode = 104
-    }
-
-    private enum DeviceMask {
-        static let rightCommand: UInt64 = 0x10
-        static let leftCommand: UInt64 = 0x08
-        static let leftShift: UInt64 = 0x02
-        static let rightShift: UInt64 = 0x04
-        static let leftOption: UInt64 = 0x20
-        static let rightOption: UInt64 = 0x40
-        static let leftControl: UInt64 = 0x01
-        static let rightControl: UInt64 = 0x2000
-        static let function: UInt64 = 0x800000
-        static let capsLock: UInt64 = 0x10000
-    }
-
-    // Modifier keyCode -> device-dependent flag bit.
-    // The side-specific bits let us distinguish Left Command from Right Command.
-    private let modifierMasks: [CGKeyCode: UInt64] = [
-        KeyCode.rightCommand: DeviceMask.rightCommand,
-        KeyCode.leftCommand: DeviceMask.leftCommand,
-        KeyCode.leftShift: DeviceMask.leftShift,
-        KeyCode.rightShift: DeviceMask.rightShift,
-        KeyCode.leftOption: DeviceMask.leftOption,
-        KeyCode.rightOption: DeviceMask.rightOption,
-        KeyCode.leftControl: DeviceMask.leftControl,
-        KeyCode.rightControl: DeviceMask.rightControl,
-        KeyCode.function: DeviceMask.function,
-        KeyCode.capsLock: DeviceMask.capsLock,
-    ]
-
-    // Caps Lock is excluded so a latched Caps Lock state does not inhibit
-    // standalone Command switching.
-    private let disqualifyingModifierMask: UInt64 =
-        DeviceMask.rightCommand
-        | DeviceMask.leftCommand
-        | DeviceMask.leftShift
-        | DeviceMask.rightShift
-        | DeviceMask.leftOption
-        | DeviceMask.rightOption
-        | DeviceMask.leftControl
-        | DeviceMask.rightControl
-        | DeviceMask.function
-
-    private let commandOutputKeys: [CGKeyCode: CGKeyCode] = [
-        KeyCode.leftCommand: KeyCode.eisu,
-        KeyCode.rightCommand: KeyCode.kana,
-    ]
-
-    private var pendingCommandKeyCode: CGKeyCode?
+    private var engine = KeyRemapEngine()
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var mouseMonitor: Any?
@@ -152,31 +91,16 @@ final class KeyRemapper {
             }
 
         case .keyDown:
-            pendingCommandKeyCode = nil
+            _ = engine.handle(.keyDown)
+
+        case .keyUp:
+            _ = engine.handle(.keyUp)
 
         case .flagsChanged:
             let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
-            guard let changedModifierMask = modifierMasks[keyCode] else {
-                pendingCommandKeyCode = nil
-                return
-            }
             let flags = event.flags.rawValue
-            let isDown = (flags & changedModifierMask) != 0
-
-            if isDown {
-                if commandOutputKeys[keyCode] != nil,
-                   activeDisqualifyingModifiers(in: flags) == changedModifierMask {
-                    pendingCommandKeyCode = keyCode
-                } else {
-                    pendingCommandKeyCode = nil
-                }
-            } else {
-                if pendingCommandKeyCode == keyCode,
-                   let output = commandOutputKeys[keyCode],
-                   activeDisqualifyingModifiers(in: flags) == 0 {
-                    postKey(output)
-                }
-                pendingCommandKeyCode = nil
+            if case .post(let output) = engine.handle(.flagsChanged(keyCode: keyCode, flags: flags)) {
+                postKey(output)
             }
 
         default:
@@ -194,17 +118,13 @@ final class KeyRemapper {
         up?.post(tap: .cghidEventTap)
     }
 
-    private func activeDisqualifyingModifiers(in flags: UInt64) -> UInt64 {
-        flags & disqualifyingModifierMask
-    }
-
     private func setupMouseMonitor() {
         let mouseEvents: NSEvent.EventTypeMask = [
             .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel,
         ]
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: mouseEvents) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.pendingCommandKeyCode = nil
+                _ = self?.engine.handle(.pointerActivity)
             }
         }
     }
