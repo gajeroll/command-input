@@ -34,7 +34,7 @@ DEVID_IDENTITY ?= Developer ID Application
 NOTARY_PROFILE ?= CommandInputNotary
 DIST_ZIP       := $(DIST_DIR)/$(EXEC_NAME)-$(VERSION).zip
 
-.PHONY: all compile build release notarize dist run install uninstall clean
+.PHONY: all compile build release notarize dist run install uninstall clean test
 
 all: build
 
@@ -78,6 +78,9 @@ install: build
 uninstall:
 	@rm -rf "$(INSTALL_DIR)/$(BUNDLE)"
 	@echo "Removed \"$(INSTALL_DIR)/$(BUNDLE)\""
+
+test:
+	swift test
 
 clean:
 	@rm -rf "$(BUILD_DIR)" "$(DIST_DIR)"

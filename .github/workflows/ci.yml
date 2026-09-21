@@ -28,6 +28,8 @@ jobs:
           xcodebuild -version
           swift --version
       - name: Lint
-        run: xcrun swift-format lint --recursive Sources
+        run: xcrun swift-format lint --recursive Sources Tests Package.swift
+      - name: Test
+        run: make test
       - name: Compile
         run: make compile SIGN_IDENTITY=-

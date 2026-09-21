@@ -1,45 +1,45 @@
 import CoreGraphics
 
 /// Detects standalone Left and Right Command taps without touching CGEvent.
-struct KeyRemapEngine {
-    enum Input {
+public struct KeyRemapEngine {
+    public enum Input {
         case keyDown
         case keyUp
         case flagsChanged(keyCode: CGKeyCode, flags: UInt64)
         case pointerActivity
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case none
         case post(CGKeyCode)
     }
 
-    enum KeyCode {
-        static let rightCommand: CGKeyCode = 54
-        static let leftCommand: CGKeyCode = 55
-        static let leftShift: CGKeyCode = 56
-        static let capsLock: CGKeyCode = 57
-        static let leftOption: CGKeyCode = 58
-        static let leftControl: CGKeyCode = 59
-        static let rightShift: CGKeyCode = 60
-        static let rightOption: CGKeyCode = 61
-        static let rightControl: CGKeyCode = 62
-        static let function: CGKeyCode = 63
-        static let eisu: CGKeyCode = 102
-        static let kana: CGKeyCode = 104
+    public enum KeyCode {
+        public static let rightCommand: CGKeyCode = 54
+        public static let leftCommand: CGKeyCode = 55
+        public static let leftShift: CGKeyCode = 56
+        public static let capsLock: CGKeyCode = 57
+        public static let leftOption: CGKeyCode = 58
+        public static let leftControl: CGKeyCode = 59
+        public static let rightShift: CGKeyCode = 60
+        public static let rightOption: CGKeyCode = 61
+        public static let rightControl: CGKeyCode = 62
+        public static let function: CGKeyCode = 63
+        public static let eisu: CGKeyCode = 102
+        public static let kana: CGKeyCode = 104
     }
 
-    enum DeviceMask {
-        static let rightCommand: UInt64 = 0x10
-        static let leftCommand: UInt64 = 0x08
-        static let leftShift: UInt64 = 0x02
-        static let rightShift: UInt64 = 0x04
-        static let leftOption: UInt64 = 0x20
-        static let rightOption: UInt64 = 0x40
-        static let leftControl: UInt64 = 0x01
-        static let rightControl: UInt64 = 0x2000
-        static let function: UInt64 = 0x800000
-        static let capsLock: UInt64 = 0x10000
+    public enum DeviceMask {
+        public static let rightCommand: UInt64 = 0x10
+        public static let leftCommand: UInt64 = 0x08
+        public static let leftShift: UInt64 = 0x02
+        public static let rightShift: UInt64 = 0x04
+        public static let leftOption: UInt64 = 0x20
+        public static let rightOption: UInt64 = 0x40
+        public static let leftControl: UInt64 = 0x01
+        public static let rightControl: UInt64 = 0x2000
+        public static let function: UInt64 = 0x800000
+        public static let capsLock: UInt64 = 0x10000
     }
 
     // Modifier keyCode -> device-dependent flag bit.
@@ -75,9 +75,11 @@ struct KeyRemapEngine {
         KeyCode.rightCommand: KeyCode.kana,
     ]
 
-    private(set) var pendingCommandKeyCode: CGKeyCode?
+    public private(set) var pendingCommandKeyCode: CGKeyCode?
 
-    mutating func handle(_ input: Input) -> Action {
+    public init() {}
+
+    public mutating func handle(_ input: Input) -> Action {
         switch input {
         case .keyDown:
             // keyUp is accepted as input but ignored until the tap mask
