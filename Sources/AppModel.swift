@@ -103,7 +103,11 @@ final class AppModel {
     /// Checks permission and starts the event tap as soon as macOS allows it.
     private func tick() {
         if AXIsProcessTrusted() {
-            remapper.start()
+            if !remapper.isActive {
+                remapper.start()
+            }
+        } else if remapper.isActive {
+            remapper.stop()
         }
         isActive = remapper.isActive
         refreshLaunchAtLoginStatusIfStale()
@@ -115,19 +119,19 @@ final class AppModel {
     private func requestAccessibilityPromptOnce() {
         guard !didPrompt else { return }
         didPrompt = true
-        // Use the stable string key because the CoreServices global is not
-        // concurrency-safe in Swift 6.
+        // Use a string literal key because the CoreServices global
+        // `kAXTrustedCheckOptionPrompt` is not marked `@Sendable` in Swift 6.
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
     }
 
     // MARK: - Launch at Login
 
-    /// Applies the stored preference and repairs a registration macOS no longer honors.
+    /// Applies the user's stored preference and repairs broken login item registrations.
     ///
-    /// The stored preference is the source of truth. `SMAppService.status` only
-    /// describes what macOS currently believes, and that is exactly what drifts
-    /// when a registration breaks, so it cannot stand in for the user's choice.
+    /// User defaults are the source of truth. `SMAppService.status` reflects the
+    /// current system registration, which can silently drift or drop across
+    /// updates and application replacements.
     private func configureLaunchAtLogin() {
         refreshLaunchAtLoginStatus()
         migrateLegacyPreferenceIfNeeded()
@@ -227,8 +231,9 @@ final class AppModel {
             break
         }
 
-        // A lost record is not replaced by registering over it, so drop the stale
-        // entry first. It is already unreachable, so a failure here is expected.
+        // macOS does not overwrite orphaned (.notFound) login item records on
+        // `register()`. Unregister the stale entry first; failures are safe
+        // to ignore because the record is already unreachable.
         if launchAtLoginState == .notFound {
             try? SMAppService.mainApp.unregister()
         }
@@ -345,8 +350,12 @@ final class AppModel {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         task.arguments = ["-n", Bundle.main.bundlePath]
-        try? task.run()
-        NSApp.terminate(nil)
+        do {
+            try task.run()
+            NSApp.terminate(nil)
+        } catch {
+            NSLog("Command Input: Failed to launch restart process: \(error.localizedDescription)")
+        }
     }
 
     func quit() {

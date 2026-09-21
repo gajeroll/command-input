@@ -49,8 +49,8 @@ final class KeyRemapper {
         KeyCode.capsLock: DeviceMask.capsLock,
     ]
 
-    // Caps Lock is intentionally ignored here because its latched state should
-    // not prevent Command-only switching.
+    // Caps Lock is excluded so a latched Caps Lock state does not inhibit
+    // standalone Command switching.
     private let disqualifyingModifierMask: UInt64 =
         DeviceMask.rightCommand
         | DeviceMask.leftCommand
@@ -96,11 +96,12 @@ final class KeyRemapper {
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
-            options: .defaultTap,
+            options: .listenOnly,
             eventsOfInterest: mask,
             callback: { _, type, event, refcon in
-                // The callback runs on the main run loop. Always pass the
-                // original event through unchanged.
+                // The callback executes on the main run loop. The tap is
+                // listen-only, so the return value is ignored; pass the event
+                // through for the defaultTap-compatible path anyway.
                 if let refcon {
                     let remapper = Unmanaged<KeyRemapper>.fromOpaque(refcon).takeUnretainedValue()
                     MainActor.assumeIsolated {
@@ -127,9 +128,11 @@ final class KeyRemapper {
     func stop() {
         if let eventTap {
             CGEvent.tapEnable(tap: eventTap, enable: false)
+            CFMachPortInvalidate(eventTap)
         }
         if let runLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+            CFRunLoopSourceInvalidate(runLoopSource)
         }
         if let mouseMonitor {
             NSEvent.removeMonitor(mouseMonitor)
