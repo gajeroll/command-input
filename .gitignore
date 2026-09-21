@@ -18,11 +18,13 @@ xcuserdata/
 *.p12
 *.cer
 *.pem
+*.p8
 *.key
 *.provisionprofile
 *.mobileprovision
 .env
 .env.*
+config/release.mk
 
 # IDEs / editors
 .cursor/

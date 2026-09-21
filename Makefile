@@ -29,9 +29,14 @@ SIGN_IDENTITY        ?= $(if $(DEV_SIGNING_IDENTITY),$(DEV_SIGNING_IDENTITY),-)
 
 # --- Release signing and notarization --------------------------------------
 # Developer ID signing, Hardened Runtime, and notarization are required for
-# public distribution. Create the notarytool keychain profile first.
-DEVID_IDENTITY ?= Developer ID Application
-NOTARY_PROFILE ?= CommandInputNotary
+# public distribution. Notarization reads App Store Connect API settings from
+# the gitignored config/release.mk (see config/release.example.mk).
+ifneq ($(filter notarize dist,$(MAKECMDGOALS)),)
+include config/release.mk
+endif
+
+DEVID_IDENTITY := Developer ID Application: Gajeroll LLC (H9DPAP9M7B)
+APPLE_TEAM_ID  ?= H9DPAP9M7B
 DIST_ZIP       := $(DIST_DIR)/$(EXEC_NAME)-$(VERSION).zip
 
 BUNDLE_VERSION ?= $(shell /usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist 2>/dev/null)
@@ -73,16 +78,44 @@ verify-release:
 
 # Release build: Developer ID, Hardened Runtime, and secure timestamp
 release: verify-release compile-universal
+	@security find-identity -v -p codesigning | grep -qF "$(DEVID_IDENTITY)" \
+	  || { echo "No signing identity matching \"$(DEVID_IDENTITY)\""; exit 1; }
 	@codesign --force --options runtime --timestamp \
 	  --sign "$(DEVID_IDENTITY)" "$(APP_DIR)"
 	@echo "Release-signed \"$(APP_DIR)\" (identity: $(DEVID_IDENTITY))"
 
+define require-notarize-config
+	@test -n "$(ASC_KEY_ID)" || { echo "ASC_KEY_ID is not set. Copy config/release.example.mk to config/release.mk"; exit 1; }
+	@test -n "$(ASC_ISSUER_ID)" || { echo "ASC_ISSUER_ID is not set"; exit 1; }
+	@test -n "$(ASC_KEY_PATH)" || { echo "ASC_KEY_PATH is not set"; exit 1; }
+	@test -f "$(ASC_KEY_PATH)" || { echo "ASC API key not found at the configured path"; exit 1; }
+endef
+
 # Notarize, staple the app, and create a distributable zip
 notarize: release
+	$(require-notarize-config)
 	@mkdir -p "$(DIST_DIR)"
 	/usr/bin/ditto -c -k --keepParent "$(APP_DIR)" "$(DIST_DIR)/submit.zip"
-	xcrun notarytool submit "$(DIST_DIR)/submit.zip" --keychain-profile "$(NOTARY_PROFILE)" --wait
+	@set -e; \
+	out=$$(xcrun notarytool submit "$(DIST_DIR)/submit.zip" \
+	  --key "$(ASC_KEY_PATH)" --key-id "$(ASC_KEY_ID)" --issuer "$(ASC_ISSUER_ID)" --wait); \
+	echo "$$out"; \
+	echo "$$out" | grep -q "status: Accepted" || { \
+	  id=$$(echo "$$out" | awk '/id:/{print $$2; exit}'); \
+	  if [ -n "$$id" ]; then \
+	    xcrun notarytool log "$$id" --key "$(ASC_KEY_PATH)" --key-id "$(ASC_KEY_ID)" --issuer "$(ASC_ISSUER_ID)"; \
+	  fi; \
+	  exit 1; \
+	}
 	xcrun stapler staple "$(APP_DIR)"
+	xcrun stapler validate "$(APP_DIR)"
+	/usr/sbin/spctl --assess --type execute --verbose "$(APP_DIR)"
+	codesign --verify --deep --strict "$(APP_DIR)"
+	@codesign -dvv "$(APP_DIR)" 2>&1 | grep -q "TeamIdentifier=$(APPLE_TEAM_ID)" \
+	  || { echo "TeamIdentifier is not $(APPLE_TEAM_ID)"; exit 1; }
+	@archs=$$(lipo -archs "$(EXEC)"); \
+	  echo "$$archs" | grep -q arm64 || { echo "missing arm64 ($$archs)"; exit 1; }; \
+	  echo "$$archs" | grep -q x86_64 || { echo "missing x86_64 ($$archs)"; exit 1; }
 	@rm -f "$(DIST_DIR)/submit.zip"
 	/usr/bin/ditto -c -k --keepParent "$(APP_DIR)" "$(DIST_ZIP)"
 	@echo "Notarized + stapled. Distributable: \"$(DIST_ZIP)\""
