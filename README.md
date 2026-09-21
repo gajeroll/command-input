@@ -11,6 +11,8 @@ modes with single taps of the Command keys:
 Standard keyboard shortcuts such as `Command-C` or `Command-Space` pass through
 unchanged.
 
+![Command Input menu](docs/menu.png)
+
 ## Requirements
 
 - **Platform:** macOS 14.0 Sonoma or later

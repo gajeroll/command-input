@@ -11,6 +11,8 @@ macOS メニューバーアプリです。
 `Command-C` や `Command-Space` などの標準的なキーボードショートカットはそのまま
 動作します。
 
+![Command Input メニュー](docs/menu.png)
+
 ## 必要環境
 
 - **対応 OS:** macOS 14.0 Sonoma 以降
