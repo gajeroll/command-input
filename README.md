@@ -1,109 +1,110 @@
 # Command Input
 
-Command Input is a lightweight macOS menu bar app for switching Japanese input modes with the Command keys:
+Command Input is a lightweight macOS menu bar app that switches Japanese input
+modes with single taps of the Command keys:
 
-- **Left Command** alone: Eisu
-- **Right Command** alone: Kana
+- **Left Command** (tap alone) → Eisu (英数 / Alphanumeric)
+- **Right Command** (tap alone) → Kana (かな / Japanese)
 
-Normal shortcuts such as `Command-C` are passed through unchanged.
+Standard keyboard shortcuts such as `Command-C` or `Command-Space` pass through
+unchanged.
 
 ## Requirements
 
-- macOS 14 Sonoma or later
-- Swift 6 and Xcode Command Line Tools
+- **Platform:** macOS 14.0 Sonoma or later
+- **Build (source only):** Swift 6 and Xcode Command Line Tools
 
-## Install and Run
+## Installation
+
+### Prebuilt binary
+
+Download the latest `CommandInput-<version>.zip` from
+[Releases](https://github.com/gajeroll/command-input/releases), unzip it, and
+drag `Command Input.app` to `/Applications`.
+
+### Build from source
 
 ```sh
+git clone https://github.com/gajeroll/command-input.git
+cd command-input
 make            # Build build/Command Input.app
 make run        # Run from the build directory
 make install    # Copy to /Applications
 ```
 
-The app runs in the menu bar and does not appear in the Dock.
+Command Input runs as a menu bar accessory and does not appear in the Dock.
+
+### Uninstallation
+
+```sh
+make uninstall  # Remove /Applications/Command Input.app
+```
+
+You can also quit the app and move it to the Trash.
+
+## Permissions and Privacy
+
+Command Input requires **Accessibility** permission to observe modifier keys
+and post input-switching events.
+
+- **Granting permission:** Enable the app under **System Settings > Privacy &
+  Security > Accessibility** when prompted.
+- **Input Monitoring is not required.** The app uses a session-level
+  `CGEventTap` and does not need the broader Input Monitoring permission.
+- **What the tap does:** The tap is created with `listenOnly`, so it cannot
+  modify or suppress events. It still observes `keyDown` events so a shortcut
+  such as Command-A can cancel a pending switch. Keystrokes are not stored or
+  sent anywhere.
+
+See [SECURITY.md](SECURITY.md) for the full policy and a verification command.
 
 ## Launch at Login
 
-Launch at Login uses macOS `SMAppService` and stores your choice in app preferences. That stored
-choice, not the current system state, decides what the app does on launch, so a registration macOS
-silently drops is restored instead of being mistaken for an opt-out.
+Command Input manages startup through macOS `SMAppService` and an internal
+preference. The stored preference is the source of truth, so a registration
+that macOS silently drops is restored instead of being treated as an opt-out.
 
-The first run from `/Applications` or `~/Applications` turns Launch at Login on. A copy running from
-`build/` is never registered automatically, because that bundle is about to be replaced or moved.
-The menu toggle works from any location.
+### Default behavior
 
-If macOS drops the registration, the app re-registers it on the next few launches and then stops,
-leaving **Repair Launch at Login** in the menu. If macOS asks for approval instead, the menu links
-to Login Items in System Settings, where the item has to be turned on once.
+- **Installed app** (`/Applications` or `~/Applications`): enabled automatically
+  on first launch.
+- **Development builds** (`build/`): automatic registration is off so a
+  temporary path is not recorded. The menu toggle still works.
 
-Use the menu toggle to opt out. Deleting the item in System Settings only clears the system record,
-so the app restores it from the stored preference.
+### Approval, repair, and opt-out
 
-## Permissions
+- **Approval required:** If macOS asks for approval, choose **Open Login Items
+  Settings** in the app menu and enable Command Input once.
+- **Repair:** If macOS loses the registration, the app retries a few times and
+  then shows **Repair Launch at Login** in the menu.
+- **Disabling:** Use the in-app toggle. Removing the item in System Settings
+  only clears the system record, so the app restores it from the stored
+  preference.
 
-Command Input requires **Accessibility** permission to observe and post keyboard events. Enable it in **System Settings > Privacy & Security > Accessibility** when prompted.
+## Troubleshooting
 
-Input Monitoring is not required.
+- **Keys are not switching:** Open **System Settings > Privacy & Security >
+  Accessibility** and confirm Command Input is enabled. After an update, turn
+  the checkbox off and on again.
+- **Menu shows "Repair Launch at Login":** Click the item to re-register with
+  macOS.
+- **Menu shows "Approve Command Input in Login Items":** Open Login Items in
+  System Settings and enable the app.
 
-## Implementation
+## Development
 
-The codebase is intentionally small and uses Swift 6, SwiftUI `MenuBarExtra`, and the Observation framework.
-
-- `Sources/CommandInputApp.swift`: app entry point and menu bar UI
-- `Sources/AppModel.swift`: app state, permission polling, and user actions
-- `Sources/KeyRemapper.swift`: `CGEventTap` handling and input switching
-
-## Development Signing
-
-`make` prefers an available **Apple Development** signing identity. Accessibility permission only
-needs a signing identity that stays the same across rebuilds, but Login Items additionally needs a
-real Team ID, which ad-hoc signing cannot provide. Override the identity explicitly when more than
-one is installed:
-
-```sh
-make SIGN_IDENTITY="Apple Development: Your Name (TEAMID1234)"
-```
-
-Without an Apple Development identity, `make` falls back to ad-hoc signing. Ad-hoc signatures change
-on every rebuild, so Accessibility permission has to be granted again each time and Launch at Login
-cannot be registered at all. A trusted self-signed certificate is a better fallback because it at
-least keeps the identity stable:
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local
+setup, code signing, architecture notes, and the release workflow.
 
 ```sh
-make SIGN_IDENTITY="Command Input Dev"
+make run        # Build and run locally
+make clean      # Remove build artifacts
 ```
 
-Switching signing identities changes how macOS identifies the app, so Accessibility permission has
-to be granted again after the first build that changes it. An Apple Development identity and a
-Developer ID identity usually belong to different teams, so permissions and login items are not
-shared between local and release builds. Verify Launch at Login with the build you ship.
+## Security
 
-## Release Builds
-
-Public distribution requires Developer ID signing and notarization.
-
-Create a notarytool keychain profile:
-
-```sh
-xcrun notarytool store-credentials "CommandInputNotary" \
-  --apple-id "you@example.com" \
-  --team-id "TEAMID1234" \
-  --password "app-specific-password"
-```
-
-Then build a notarized zip:
-
-```sh
-make notarize
-```
-
-Override the defaults if needed:
-
-```sh
-make notarize DEVID_IDENTITY="Developer ID Application: Your Name (TEAMID1234)" NOTARY_PROFILE="CommandInputNotary"
-```
-
-The output is written to `dist/CommandInput-<version>.zip`.
+For event-tap guarantees and vulnerability reporting, see
+[SECURITY.md](SECURITY.md).
 
 ## Roadmap
 
@@ -113,8 +114,9 @@ The output is written to `dist/CommandInput-<version>.zip`.
 
 ## Credits
 
-Inspired by [iMasanari/cmd-eikana](https://github.com/iMasanari/cmd-eikana) and [dominion525/cmd-eikana](https://github.com/dominion525/cmd-eikana).
+Inspired by [iMasanari/cmd-eikana](https://github.com/iMasanari/cmd-eikana) and
+[dominion525/cmd-eikana](https://github.com/dominion525/cmd-eikana).
 
 ## License
 
-MIT License
+Distributed under the [MIT License](LICENSE).

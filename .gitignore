@@ -1,12 +1,30 @@
 # Build artifacts
 build/
 dist/
+DerivedData/
 
 # macOS
 .DS_Store
+._*
 
 # Swift / Xcode
 .build/
 *.swiftpm
 *.xcuserstate
 xcuserdata/
+*.xcuserdatad
+
+# Certificates / signing / secrets
+*.p12
+*.cer
+*.pem
+*.key
+*.provisionprofile
+*.mobileprovision
+.env
+.env.*
+
+# IDEs / editors
+.cursor/
+.vscode/
+.idea/

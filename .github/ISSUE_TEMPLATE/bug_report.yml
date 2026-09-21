@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a problem with Command Input
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. For security issues, use
+        [private vulnerability reporting](https://github.com/gajeroll/command-input/security/advisories/new)
+        instead of a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "15.0"
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: Command Input version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: checkboxes
+    id: accessibility
+    attributes:
+      label: Accessibility
+      options:
+        - label: Command Input is enabled under System Settings > Privacy & Security > Accessibility
