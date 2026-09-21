@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `KeyRemapEngine` pure state machine extracted into `CommandInputCore`.
+- Unit test suite using Swift Testing and `Package.swift`, runnable via `make test`.
+- `LaunchAtLoginManager` and `LoginItemService` protocol abstractions extracted
+  into `CommandInputCore`.
+- Automatic recreation of dead event taps when re-enabling fails.
+- Universal Binary compilation (`arm64` and `x86_64`) via
+  `make compile-universal` and `make release`.
+- `PrivacyInfo.xcprivacy` privacy manifest declaring UserDefaults usage (CA92.1)
+  and zero data collection or tracking.
+- `make verify-release` target to check version format in `Info.plist` and
+  `CHANGELOG.md` headings.
+- Japanese user documentation (`README.ja.md`).
+
+### Fixed
+
+- Handled `keyUp` events in `KeyRemapEngine` so releasing a held key after a
+  shortcut or tapping Command while another key is held properly cancels
+  pending switches.
+
 ## [0.1.0] - 2026-09-21
 
 ### Added

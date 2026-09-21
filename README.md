@@ -12,6 +12,7 @@ unchanged.
 ## Requirements
 
 - **Platform:** macOS 14.0 Sonoma or later
+- **Architecture:** Apple silicon and Intel (Universal release builds)
 - **Build (source only):** Swift 6 and Xcode Command Line Tools
 
 ## Installation
@@ -27,7 +28,7 @@ drag `Command Input.app` to `/Applications`.
 ```sh
 git clone https://github.com/gajeroll/command-input.git
 cd command-input
-make            # Build build/Command Input.app
+make            # Build build/Command Input.app (host architecture)
 make run        # Run from the build directory
 make install    # Copy to /Applications
 ```
@@ -52,9 +53,11 @@ and post input-switching events.
 - **Input Monitoring is not required.** The app uses a session-level
   `CGEventTap` and does not need the broader Input Monitoring permission.
 - **What the tap does:** The tap is created with `listenOnly`, so it cannot
-  modify or suppress events. It still observes `keyDown` events so a shortcut
-  such as Command-A can cancel a pending switch. Keystrokes are not stored or
-  sent anywhere.
+  modify or suppress events. It observes `keyDown`, `keyUp`, and `flagsChanged`
+  events so shortcuts such as Command-A or held keys cancel a pending switch.
+  Keystrokes are never stored or sent anywhere.
+- **Privacy manifest:** `PrivacyInfo.xcprivacy` is bundled into the app
+  (no tracking, no collected data, and UserDefaults reason CA92.1).
 
 See [SECURITY.md](SECURITY.md) for the full policy and a verification command.
 
@@ -84,8 +87,8 @@ that macOS silently drops is restored instead of being treated as an opt-out.
 ## Troubleshooting
 
 - **Keys are not switching:** Open **System Settings > Privacy & Security >
-  Accessibility** and confirm Command Input is enabled. After an update, turn
-  the checkbox off and on again.
+  Accessibility** and confirm Command Input is enabled. After an update or
+  identity change, turn the checkbox off and on again.
 - **Menu shows "Repair Launch at Login":** Click the item to re-register with
   macOS.
 - **Menu shows "Approve Command Input in Login Items":** Open Login Items in
@@ -97,6 +100,8 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local
 setup, code signing, architecture notes, and the release workflow.
 
 ```sh
+make            # Build local host binary
+make test       # Run test suite via Swift Testing
 make run        # Build and run locally
 make clean      # Remove build artifacts
 ```
